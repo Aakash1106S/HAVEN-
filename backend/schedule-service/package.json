@@ -1,0 +1,25 @@
+{
+  "name": "haven-schedule-service",
+  "version": "1.0.0",
+  "description": "Haven Smart Home Schedule Execution Service",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "firebase-admin": "^12.3.0",
+    "zod": "^3.23.8",
+    "winston": "^3.14.2",
+    "uuid": "^10.0.0",
+    "cron-parser": "^4.9.0",
+    "luxon": "^3.5.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.4"
+  }
+}

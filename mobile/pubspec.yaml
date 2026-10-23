@@ -1,0 +1,81 @@
+name: haven_mobile
+description: Haven Smart Home Automation — Control your home from anywhere.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.11.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # ── State Management ──
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # ── Navigation ──
+  go_router: ^14.2.7
+
+  # ── Firebase ──
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.3
+  firebase_messaging: ^15.1.3
+  firebase_app_check: ^0.3.1+4
+
+  # ── Secure Storage ──
+  flutter_secure_storage: ^9.2.2
+
+  # ── MQTT ──
+  mqtt_client: ^10.5.2
+
+  # ── Voice ──
+  speech_to_text: ^7.0.0
+  flutter_tts: ^4.0.2
+
+  # ── Notifications ──
+  flutter_local_notifications: ^18.0.1
+
+  # ── Permissions ──
+  permission_handler: ^11.3.1
+
+  # ── Network ──
+  connectivity_plus: ^6.0.5
+  http: ^1.2.2
+
+  # ── Internationalization / Timezone ──
+  intl: ^0.19.0
+  timezone: ^0.9.4
+
+  # ── UI ──
+  flutter_svg: ^2.0.10+1
+  cached_network_image: ^3.4.1
+  lottie: ^3.1.2
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.0
+
+  # ── Utilities ──
+  uuid: ^4.4.2
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  collection: ^1.18.0
+  equatable: ^2.0.5
+  rxdart: ^0.28.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.11
+  riverpod_generator: ^2.4.0
+  freezed: ^2.5.2
+  json_serializable: ^6.8.0
+  mockito: ^5.4.4
+
+dependency_overrides:
+  firebase_core_platform_interface: 6.0.2
+
+flutter:
+  uses-material-design: true
