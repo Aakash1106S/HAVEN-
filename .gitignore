@@ -1,0 +1,105 @@
+# ============================================================
+# Haven Smart Home — Root .gitignore
+# ============================================================
+
+# ──────────────────────── Credentials & Secrets ────────────────────────
+# NEVER commit these files
+*.env
+*.env.*
+.env
+.env.local
+.env.production
+.env.staging
+google-services.json
+GoogleService-Info.plist
+**/google-services.json
+**/GoogleService-Info.plist
+service-account.json
+**/service-account.json
+*.p12
+*.keystore
+*.jks
+key.properties
+**/key.properties
+firebase-adminsdk*.json
+**/firebase-adminsdk*.json
+mosquitto.passwd
+*.pem
+*.key
+*.crt
+*.ca
+device_credentials.h
+**/device_credentials.h
+
+# ──────────────────────── Flutter / Dart ────────────────────────
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/build/
+mobile/.pub-cache/
+mobile/.pub/
+mobile/pubspec.lock
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/captures/
+mobile/android/gradlew
+mobile/android/gradlew.bat
+mobile/android/gradle/
+mobile/android/app/debug/
+mobile/android/app/release/
+mobile/android/app/profile/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/App.framework/
+mobile/ios/Flutter/Flutter.framework/
+mobile/ios/Flutter/Flutter.podspec
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/app.flx
+mobile/ios/Flutter/app.zip
+mobile/ios/Flutter/flutter_assets/
+mobile/ios/Runner/GeneratedPluginRegistrant.*
+mobile/ios/*.xcworkspace/xcuserdata/
+mobile/**/*.g.dart
+mobile/**/*.freezed.dart
+mobile/coverage/
+mobile/test/.dart_tool/
+
+# ──────────────────────── Node.js / Backend ────────────────────────
+backend/**/node_modules/
+backend/**/.npm
+backend/**/dist/
+backend/**/build/
+backend/**/*.log
+backend/**/.DS_Store
+backend/functions/lib/
+
+# ──────────────────────── PlatformIO / Firmware ────────────────────────
+firmware/.pio/
+firmware/.pioenvs/
+firmware/.piolibdeps/
+firmware/.vscode/
+firmware/lib/
+
+# ──────────────────────── Firebase ────────────────────────
+.firebase/
+firebase/functions/node_modules/
+firebase/functions/lib/
+.firebaserc
+
+# ──────────────────────── General ────────────────────────
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.swp
+.idea/
+.vscode/settings.json
+*.iml
+__pycache__/
+*.pyc
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl

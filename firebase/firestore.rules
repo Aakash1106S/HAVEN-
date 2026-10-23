@@ -1,0 +1,194 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Helper Functions
+    // ─────────────────────────────────────────────────────────────────────
+
+    // Verify user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Get the requesting user's UID
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Check if user is owner of a home
+    function isHomeOwner(homeId) {
+      return isAuthenticated() &&
+        get(/databases/$(database)/documents/homes/$(homeId)).data.ownerId == uid();
+    }
+
+    // Check if user is a member of a home (owner or member)
+    function isHomeMember(homeId) {
+      return isAuthenticated() && (
+        get(/databases/$(database)/documents/homes/$(homeId)).data.ownerId == uid() ||
+        uid() in get(/databases/$(database)/documents/homes/$(homeId)).data.memberIds
+      );
+    }
+
+    // Check if incoming data has a field that matches the current user
+    function isRequestingUser(userId) {
+      return isAuthenticated() && uid() == userId;
+    }
+
+    // Validate that a field is a valid timestamp
+    function isTimestamp(value) {
+      return value is timestamp;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // User Profiles
+    // ─────────────────────────────────────────────────────────────────────
+    match /users/{userId} {
+      // Users can only read and write their own profile
+      allow read: if isRequestingUser(userId);
+      allow create: if isRequestingUser(userId) &&
+        request.resource.data.uid == userId &&
+        request.resource.data.email is string &&
+        request.resource.data.keys().hasAll(['uid', 'email', 'createdAt']);
+      allow update: if isRequestingUser(userId) &&
+        // Cannot change uid or createdAt
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if isRequestingUser(userId);
+
+      // Notification preferences subcollection
+      match /notificationPreferences/{prefId} {
+        allow read, write: if isRequestingUser(userId);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Homes
+    // ─────────────────────────────────────────────────────────────────────
+    match /homes/{homeId} {
+      // Members can read their home (uses resource.data so collection queries like where('ownerId', '==', uid) work)
+      allow read: if isAuthenticated() && (
+        resource.data.ownerId == uid() ||
+        ('memberIds' in resource.data && uid() in resource.data.memberIds)
+      );
+
+      // Only authenticated users can create a home where they are the owner
+      allow create: if isAuthenticated() &&
+        request.resource.data.ownerId == uid() &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.keys().hasAll(['name', 'ownerId', 'timezone', 'createdAt']);
+
+      // Only owner can update home settings
+      // Owner cannot change ownerId through client
+      allow update: if isAuthenticated() && resource.data.ownerId == uid() &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.createdAt == resource.data.createdAt;
+
+      // Only owner can delete home
+      allow delete: if isAuthenticated() && resource.data.ownerId == uid();
+
+      // ─── Rooms ───────────────────────────────────────────────────────
+      match /rooms/{roomId} {
+        allow read: if isHomeMember(homeId);
+        allow create: if isHomeMember(homeId) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() > 0 &&
+          request.resource.data.name.size() <= 100;
+        allow update: if isHomeMember(homeId) &&
+          request.resource.data.homeId == resource.data.homeId;
+        allow delete: if isHomeOwner(homeId);
+      }
+
+      // ─── Devices ─────────────────────────────────────────────────────
+      match /devices/{deviceId} {
+        // Home members can read device info
+        allow read: if isHomeMember(homeId);
+        // Device registration is done by backend only - deny client writes
+        // except for renaming
+        allow create: if false; // Backend only
+        allow update: if isHomeOwner(homeId) &&
+          // Cannot change critical fields via client
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.homeId == resource.data.homeId &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          // Client can only update: name
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'updatedAt']);
+        allow delete: if false; // Backend only
+      }
+
+      // ─── Channels (Appliance slots) ───────────────────────────────────
+      match /channels/{channelId} {
+        // Home members can read channel state
+        allow read: if isHomeMember(homeId);
+        // Channels are created/managed by backend
+        allow create: if false; // Backend only
+        // Members can update: applianceName and roomId only
+        // State fields (desiredState, reportedState, commandStatus) are backend-managed
+        allow update: if isHomeMember(homeId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['applianceName', 'roomId', 'updatedAt']);
+        allow delete: if false; // Backend only
+      }
+
+      // ─── Commands ─────────────────────────────────────────────────────
+      match /commands/{commandId} {
+        // Members can read commands
+        allow read: if isHomeMember(homeId);
+        // Commands are created by backend API only (never directly from client)
+        allow create: if false; // Backend only
+        // Commands are updated by backend only
+        allow update: if false; // Backend only
+        allow delete: if false;
+      }
+
+      // ─── Schedules ────────────────────────────────────────────────────
+      match /schedules/{scheduleId} {
+        allow read: if isHomeMember(homeId);
+        // Members can create schedules
+        allow create: if isHomeMember(homeId) &&
+          request.resource.data.keys().hasAll(['channelId', 'deviceId', 'action', 'cronExpression', 'timezone', 'isEnabled', 'createdAt']) &&
+          request.resource.data.action in ['on', 'off'] &&
+          request.resource.data.isEnabled is bool;
+        // Members can update schedules
+        allow update: if isHomeMember(homeId) &&
+          // Cannot change critical fields
+          request.resource.data.channelId == resource.data.channelId &&
+          request.resource.data.deviceId == resource.data.deviceId &&
+          request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isHomeMember(homeId);
+
+        // Schedule execution history
+        match /executions/{execId} {
+          allow read: if isHomeMember(homeId);
+          allow write: if false; // Backend only
+        }
+      }
+
+      // ─── Activity Events ──────────────────────────────────────────────
+      match /activity/{activityId} {
+        allow read: if isHomeMember(homeId);
+        allow create: if false; // Backend only
+        // Members can mark events as read
+        allow update: if isHomeMember(homeId) &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['read']);
+        allow delete: if false;
+      }
+
+      // ─── Pairing Sessions ─────────────────────────────────────────────
+      match /pairingSessions/{sessionId} {
+        // Home owner can read and create pairing sessions
+        allow read: if isHomeOwner(homeId);
+        allow create: if isHomeOwner(homeId) &&
+          request.resource.data.userId == uid() &&
+          request.resource.data.status == 'pending';
+        allow update: if false; // Backend only
+        allow delete: if isHomeOwner(homeId);
+      }
+    }
+  }
+}
